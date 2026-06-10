@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ParcleManagement.ConsoleApp/ParcleManagement.ConsoleApp.csproj" />
+  <Project Path="ParcleManagement.Data/ParcleManagement.Data.csproj" />
+  <Project Path="ParcleManagement.WebApps/ParcleManagement.WebApps.csproj" />
+</Solution>
