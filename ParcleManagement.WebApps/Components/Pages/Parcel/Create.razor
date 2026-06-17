@@ -1,0 +1,210 @@
+﻿@page "/parcels/create"
+@using ParcleManagement.Data.entity
+@using ParcleManagement.Data.db_migration
+@inject ParcleDbContext Db
+@inject NavigationManager Nav
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>New Parcel — ParcleMS</PageTitle>
+
+<!-- Breadcrumb -->
+<div class="flex-center gap-8 mb-24" style="font-size:13px;color:var(--text-secondary)">
+    <a href="/parcels" style="color:var(--blue-primary);text-decoration:none">Parcels</a>
+    <span>›</span>
+    <span>New Parcel</span>
+</div>
+
+<div style="max-width:860px; margin:auto">
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        @if (!string.IsNullOrEmpty(_errorMsg))
+        {
+            <div class="validation-summary">@_errorMsg</div>
+        }
+
+        <!-- Section: Parcel Info -->
+        <div class="st-card mb-24">
+            <div class="st-card-header">
+                <span style="font-size:18px">📦</span>
+                <h2>Parcel Information</h2>
+            </div>
+            <div class="st-card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Tracking Number <span class="required">*</span></label>
+                        <InputText class="form-input" @bind-Value="_model.TrackingNumber" placeholder="e.g. TRK-2024-001" />
+                        <ValidationMessage For="@(() => _model.TrackingNumber)" class="form-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Service Type <span class="required">*</span></label>
+                        <InputSelect class="form-select" @bind-Value="_model.ServiceTypeId">
+                            <option value="0">— Select service —</option>
+                            @foreach (var s in _serviceTypes)
+                            {
+                                <option value="@s.Id">@s.Name — $@s.BasePrice / ~@s.EstimatedDay days</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _model.ServiceTypeId)" class="form-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Weight (kg) <span class="required">*</span></label>
+                        <InputNumber class="form-input" @bind-Value="_model.Weight" placeholder="0.000" />
+                        <ValidationMessage For="@(() => _model.Weight)" class="form-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">COD Amount ($)</label>
+                        <InputNumber class="form-input" @bind-Value="_model.CodAmount" placeholder="0.00" />
+                    </div>
+
+                    <div class="form-group span-2">
+                        <label class="form-label">Description</label>
+                        <InputTextArea class="form-textarea" @bind-Value="_model.Description" placeholder="Package contents, special notes…" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Assignment -->
+        <div class="st-card mb-24">
+            <div class="st-card-header">
+                <span style="font-size:18px">👤</span>
+                <h2>Assignment</h2>
+            </div>
+            <div class="st-card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Customer <span class="required">*</span></label>
+                        <InputSelect class="form-select" @bind-Value="_model.CustomerId">
+                            <option value="0">— Select customer —</option>
+                            @foreach (var u in _customers)
+                            {
+                                <option value="@u.Id">@u.FullName (@u.Phone)</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _model.CustomerId)" class="form-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Assign Driver</label>
+                        <InputSelect class="form-select" @bind-Value="_model.DriverId">
+                            <option value="">— Unassigned —</option>
+                            @foreach (var d in _drivers)
+                            {
+                                <option value="@d.Id">@d.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Current Location (Warehouse)</label>
+                        <InputSelect class="form-select" @bind-Value="_model.CurrentLocationId">
+                            <option value="">— None —</option>
+                            @foreach (var w in _warehouses)
+                            {
+                                <option value="@w.Id">@w.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Initial Status</label>
+                        <InputSelect class="form-select" @bind-Value="_model.Status">
+                            <option value="pending">Pending</option>
+                            <option value="transit">In Transit</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex-center gap-12">
+            <button type="submit" class="btn btn-primary" disabled="@_saving">
+                @(_saving ? "Saving…" : "✅ Create Parcel")
+            </button>
+            <a href="/parcels" class="btn btn-outline">Cancel</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private ParcelFormModel _model = new() { Status = "pending" };
+    private List<User> _customers = new();
+    private List<Driver> _drivers = new();
+    private List<Warehouse> _warehouses = new();
+    private List<ServiceType> _serviceTypes = new();
+    private bool _saving;
+    private string _errorMsg = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _customers = await Db.Users.Where(u => u.Status == "active").ToListAsync();
+        _drivers = await Db.Drivers.Where(d => d.Status == "active").ToListAsync();
+        _warehouses = await Db.Warehouses.ToListAsync();
+        _serviceTypes = await Db.ServiceTypes.Where(s => s.Status == "active").ToListAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        _saving = true;
+        _errorMsg = "";
+        try
+        {
+            var parcel = new Parcel
+            {
+                TrackingNumber = _model.TrackingNumber,
+                CustomerId = _model.CustomerId,
+                DriverId = _model.DriverId,
+                CurrentLocationId = _model.CurrentLocationId,
+                ServiceTypeId = _model.ServiceTypeId,
+                Weight = _model.Weight,
+                CodAmount = _model.CodAmount,
+                Status = _model.Status,
+                Description = _model.Description,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            Db.Parcels.Add(parcel);
+            await Db.SaveChangesAsync();
+
+            // Add initial status history
+            Db.ParcelStatusHistories.Add(new ParcelStatusHistory
+            {
+                ParcelId = parcel.Id,
+                Status = parcel.Status,
+                Description = "Parcel created",
+                UpdatedBy = 1, // Replace with logged-in user ID
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+            await Db.SaveChangesAsync();
+
+            Nav.NavigateTo($"/parcels/{parcel.Id}");
+        }
+        catch (Exception ex)
+        {
+            _errorMsg = $"Failed to save: {ex.Message}";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private class ParcelFormModel
+    {
+        public string TrackingNumber { get; set; } = "";
+        public int CustomerId { get; set; }
+        public int? DriverId { get; set; }
+        public int? CurrentLocationId { get; set; }
+        public int ServiceTypeId { get; set; }
+        public decimal Weight { get; set; }
+        public decimal CodAmount { get; set; }
+        public string Status { get; set; } = "pending";
+        public string? Description { get; set; }
+    }
+}

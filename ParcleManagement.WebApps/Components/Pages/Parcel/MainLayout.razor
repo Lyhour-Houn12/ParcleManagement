@@ -1,0 +1,94 @@
+﻿@page "/"
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="app-layout" data-theme="@_theme">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">📦</div>
+            ParcleMS
+        </div>
+
+        <div style="overflow-y:auto; flex:1; padding-bottom:8px;">
+            <div class="sidebar-section">Main</div>
+
+            <NavLink class="nav-item" href="/" Match="NavLinkMatch.All">
+                <span class="nav-icon">🏠</span> Dashboard
+            </NavLink>
+
+            <div class="sidebar-section">Parcels</div>
+
+            <NavLink class="nav-item" href="/parcels">
+                <span class="nav-icon">📦</span> All Parcels
+            </NavLink>
+            <NavLink class="nav-item" href="/parcels/create">
+                <span class="nav-icon">➕</span> New Parcel
+            </NavLink>
+
+            <div class="sidebar-section">Operations</div>
+
+            <NavLink class="nav-item" href="/drivers">
+                <span class="nav-icon">🚗</span> Drivers
+            </NavLink>
+            <NavLink class="nav-item" href="/warehouses">
+                <span class="nav-icon">🏭</span> Warehouses
+            </NavLink>
+            <NavLink class="nav-item" href="/vehicles">
+                <span class="nav-icon">🚚</span> Vehicles
+            </NavLink>
+
+            <div class="sidebar-section">Finance</div>
+
+            <NavLink class="nav-item" href="/payments">
+                <span class="nav-icon">💳</span> Payments
+            </NavLink>
+
+            <div class="sidebar-section">Config</div>
+
+            <NavLink class="nav-item" href="/service-types">
+                <span class="nav-icon">⚙️</span> Service Types
+            </NavLink>
+            <NavLink class="nav-item" href="/users">
+                <span class="nav-icon">👥</span> Users
+            </NavLink>
+        </div>
+
+        <div class="sidebar-bottom">
+            <button class="nav-item" @onclick="ToggleTheme" style="width:100%">
+                <span class="nav-icon">@(_theme == "dark" ? "☀️" : "🌙")</span>
+                @(_theme == "dark" ? "Light mode" : "Dark mode")
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="st-header">
+            <div class="page-title">@PageTitle</div>
+            <div class="flex-center gap-8">
+                <div class="avatar">AD</div>
+                <div>
+                    <div style="font-size:13px;font-weight:500">Admin</div>
+                    <div class="text-muted text-sm">Manager</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-body">
+            @Body
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _theme = "light";
+    public string PageTitle { get; set; } = "Dashboard";
+
+    private void ToggleTheme()
+    {
+        _theme = _theme == "light" ? "dark" : "light";
+    }
+}

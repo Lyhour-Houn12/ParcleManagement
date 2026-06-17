@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ParcleManagement.Data.db_migration;
@@ -11,9 +12,11 @@ using ParcleManagement.Data.db_migration;
 namespace ParcleManagement.Data.Migrations
 {
     [DbContext(typeof(ParcleDbContext))]
-    partial class ParcleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617153724_UpdateSchema")]
+    partial class UpdateSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

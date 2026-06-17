@@ -1,0 +1,419 @@
+﻿@page "/parcels/{Id:int}"
+@using ParcleManagement.Data.entity
+@using ParcleManagement.Data.db_migration
+@inject ParcleDbContext Db
+@inject NavigationManager Nav
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Parcel Detail — ParcleMS</PageTitle>
+
+@if (_parcel is null)
+{
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>Parcel not found.</p>
+        <a href="/parcels" class="btn btn-outline mt-16">← Back to Parcels</a>
+    </div>
+}
+else
+{
+    <!-- Breadcrumb + actions -->
+    <div class="flex-center gap-8 mb-24">
+        <a href="/parcels" style="color:var(--blue-primary);text-decoration:none;font-size:13px">Parcels</a>
+        <span class="text-muted">›</span>
+        <span class="tracking-number">@_parcel.TrackingNumber</span>
+        <div class="ml-auto flex-center gap-8">
+            <a href="/parcels/@_parcel.Id/edit" class="btn btn-outline">✏️ Edit</a>
+            <button class="btn btn-danger btn-sm" @onclick="ConfirmDelete">🗑 Delete</button>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+
+        <!-- Left column -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+            <!-- Overview card -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <span style="font-size:18px">📦</span>
+                    <h2>Parcel Details</h2>
+                    <span class="badge @StatusBadge(_parcel.Status) ml-auto">@_parcel.Status</span>
+                </div>
+                <div class="st-card-body">
+                    <div class="detail-grid">
+                        <span class="detail-label">Tracking Number</span>
+                        <span class="detail-value"><span class="tracking-number">@_parcel.TrackingNumber</span></span>
+
+                        <span class="detail-label">Service Type</span>
+                        <span class="detail-value">@_parcel.ServiceType?.Name</span>
+
+                        <span class="detail-label">Weight</span>
+                        <span class="detail-value">@_parcel.Weight kg</span>
+
+                        <span class="detail-label">COD Amount</span>
+                        <span class="detail-value">$@_parcel.CodAmount.ToString("N2")</span>
+
+                        <span class="detail-label">Current Location</span>
+                        <span class="detail-value">@(_parcel.CurrentWarehouse?.Name ?? "—")</span>
+
+                        <span class="detail-label">Description</span>
+                        <span class="detail-value">@(_parcel.Description ?? "—")</span>
+
+                        <span class="detail-label">Created</span>
+                        <span class="detail-value">@_parcel.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+
+                        <span class="detail-label">Last Updated</span>
+                        <span class="detail-value">@_parcel.UpdatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer & Driver -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <span style="font-size:18px">👤</span>
+                    <h2>People</h2>
+                </div>
+                <div class="st-card-body">
+                    <div class="section-label">Customer</div>
+                    @if (_parcel.Customer is not null)
+                    {
+                        <div class="flex-center gap-12" style="margin-bottom:20px">
+                            <div class="avatar" style="width:40px;height:40px;font-size:14px">
+                                @Initials(_parcel.Customer.FullName)
+                            </div>
+                            <div>
+                                <div class="fw-500">@_parcel.Customer.FullName</div>
+                                <div class="text-muted text-sm">@_parcel.Customer.Phone · @_parcel.Customer.Email</div>
+                            </div>
+                        </div>
+                    }
+                    <div class="section-label">Driver</div>
+                    @if (_parcel.Driver is not null)
+                    {
+                        <div class="flex-center gap-12">
+                            <div class="avatar" style="width:40px;height:40px;font-size:14px;background:#dcfce7;color:#166534">
+                                @Initials(_parcel.Driver.Name)
+                            </div>
+                            <div>
+                                <div class="fw-500">@_parcel.Driver.Name</div>
+                                <div class="text-muted text-sm">License: @(_parcel.Driver.LicenseNumber ?? "—")</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted text-sm">No driver assigned</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Delivery Attempts -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <span style="font-size:18px">🚚</span>
+                    <h2>Delivery Attempts</h2>
+                    <span class="text-muted text-sm ml-auto">@_parcel.DeliveryAttempts.Count attempt(s)</span>
+                </div>
+                @if (_parcel.DeliveryAttempts.Any())
+                {
+                    <table class="st-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Driver</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var a in _parcel.DeliveryAttempts.OrderBy(x => x.AttemptNo))
+                            {
+                                <tr>
+                                    <td>@a.AttemptNo</td>
+                                    <td>@a.Driver?.Name</td>
+                                    <td>@a.AttemptTime.ToString("MMM dd HH:mm")</td>
+                                    <td>
+                                        <span class="badge @(a.Status == "success" ? "badge-delivered" : "badge-failed")">
+                                            @a.Status
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">@(a.Reason ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:24px">
+                        <p>No delivery attempts yet.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Tracking points -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <span style="font-size:18px">📍</span>
+                    <h2>Tracking Points</h2>
+                    <span class="text-muted text-sm ml-auto">@_parcel.Trackings.Count point(s)</span>
+                </div>
+                @if (_parcel.Trackings.Any())
+                {
+                    <table class="st-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Location</th>
+                                <th>Coordinates</th>
+                                <th>Driver</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in _parcel.Trackings.OrderByDescending(x => x.RecordedAt))
+                            {
+                                <tr>
+                                    <td>@t.RecordedAt.ToString("MMM dd HH:mm")</td>
+                                    <td>@(t.Location ?? "—")</td>
+                                    <td class="text-muted text-sm">@t.Latitude, @t.Longitude</td>
+                                    <td>@t.Driver?.Name</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state" style="padding:24px">
+                        <p>No tracking data yet.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right column -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+
+            <!-- Payment -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <span style="font-size:18px">💳</span>
+                    <h2>Payment</h2>
+                </div>
+                <div class="st-card-body">
+                    @if (_parcel.Payment is not null)
+                    {
+                        <div class="detail-grid">
+                            <span class="detail-label">Amount</span>
+                            <span class="detail-value fw-500">$@_parcel.Payment.Amount.ToString("N2")</span>
+
+                            <span class="detail-label">Method</span>
+                            <span class="detail-value">@_parcel.Payment.PaymentMethod?.Name</span>
+
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value">
+                                <span class="badge @(_parcel.Payment.Status == "paid" ? "badge-paid" : "badge-unpaid")">
+                                    @_parcel.Payment.Status
+                                </span>
+                            </span>
+
+                            <span class="detail-label">Paid At</span>
+                            <span class="detail-value">
+                                @(_parcel.Payment.PaidAt.HasValue
+                                    ? _parcel.Payment.PaidAt.Value.ToString("MMM dd, yyyy")
+                                    : "—")
+                            </span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state" style="padding:16px">
+                            <p>No payment record.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Status History / Timeline -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <span style="font-size:18px">📋</span>
+                    <h2>Status History</h2>
+                </div>
+                <div class="st-card-body">
+                    @if (_parcel.StatusHistories.Any())
+                    {
+                        <div class="timeline">
+                            @foreach (var h in _parcel.StatusHistories.OrderByDescending(x => x.CreatedAt))
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-dot @(h == _parcel.StatusHistories.OrderByDescending(x => x.CreatedAt).First() ? "" : "dot-grey")"></div>
+                                    <div class="timeline-title">
+                                        <span class="badge @StatusBadge(h.Status)" style="font-size:10px">@h.Status</span>
+                                    </div>
+                                    <div class="timeline-time">@h.CreatedAt.ToString("MMM dd, yyyy · HH:mm")</div>
+                                    @if (!string.IsNullOrEmpty(h.Description))
+                                    {
+                                        <div class="timeline-desc">@h.Description</div>
+                                    }
+                                    <div class="timeline-desc" style="margin-top:2px">
+                                        by @h.UpdatedByUser?.FullName
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state" style="padding:16px">
+                            <p>No history yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick status update -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <span style="font-size:18px">🔄</span>
+                    <h2>Update Status</h2>
+                </div>
+                <div class="st-card-body">
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label class="form-label">New Status</label>
+                        <select class="form-select" @bind="_newStatus">
+                            <option value="pending">Pending</option>
+                            <option value="transit">In Transit</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="failed">Failed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px">
+                        <label class="form-label">Note (optional)</label>
+                        <textarea class="form-textarea" style="min-height:60px" @bind="_statusNote"
+                                  placeholder="e.g. Delivered to front door"></textarea>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%" @onclick="UpdateStatus" disabled="@_updatingStatus">
+                        @(_updatingStatus ? "Saving…" : "Apply Status")
+                    </button>
+                    @if (!string.IsNullOrEmpty(_statusMsg))
+                    {
+                        <div style="margin-top:8px;font-size:12px;color:#166534">@_statusMsg</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete confirm modal (simple inline) -->
+    @if (_showDelete)
+    {
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:999">
+            <div class="st-card" style="width:380px;padding:24px">
+                <h2 style="font-size:15px;margin-bottom:8px">Delete Parcel?</h2>
+                <p class="text-muted" style="font-size:13px;margin-bottom:20px">
+                    This will permanently delete <strong>@_parcel.TrackingNumber</strong> and all related records. This cannot be undone.
+                </p>
+                <div class="flex-center gap-8">
+                    <button class="btn btn-danger" @onclick="DeleteParcel">Yes, delete</button>
+                    <button class="btn btn-outline" @onclick="() => _showDelete = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Parcel? _parcel;
+    private string _newStatus = "pending";
+    private string _statusNote = "";
+    private bool _updatingStatus, _showDelete;
+    private string _statusMsg = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        _parcel = await Db.Parcels
+            .Include(p => p.Customer)
+            .Include(p => p.Driver)
+            .Include(p => p.ServiceType)
+            .Include(p => p.CurrentWarehouse)
+            .Include(p => p.Payment).ThenInclude(pay => pay!.PaymentMethod)
+            .Include(p => p.StatusHistories).ThenInclude(h => h.UpdatedByUser)
+            .Include(p => p.DeliveryAttempts).ThenInclude(a => a.Driver)
+            .Include(p => p.Trackings).ThenInclude(t => t.Driver)
+            .FirstOrDefaultAsync(p => p.Id == Id);
+
+        if (_parcel is not null)
+            _newStatus = _parcel.Status;
+    }
+
+    private async Task UpdateStatus()
+    {
+        if (_parcel is null) return;
+        _updatingStatus = true;
+        _statusMsg = "";
+        try
+        {
+            _parcel.Status = _newStatus;
+            _parcel.UpdatedAt = DateTime.UtcNow;
+
+            Db.ParcelStatusHistories.Add(new ParcelStatusHistory
+            {
+                ParcelId    = _parcel.Id,
+                Status      = _newStatus,
+                Description = _statusNote,
+                UpdatedBy   = 1, // Replace with logged-in user ID
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow
+            });
+            await Db.SaveChangesAsync();
+            _statusNote = "";
+            _statusMsg = "Status updated successfully.";
+            await Load();
+        }
+        finally
+        {
+            _updatingStatus = false;
+        }
+    }
+
+    private void ConfirmDelete() => _showDelete = true;
+
+    private async Task DeleteParcel()
+    {
+        if (_parcel is null) return;
+        Db.Parcels.Remove(_parcel);
+        await Db.SaveChangesAsync();
+        Nav.NavigateTo("/parcels");
+    }
+
+    private static string StatusBadge(string? s) => s switch
+    {
+        "pending"   => "badge-pending",
+        "transit"   => "badge-transit",
+        "delivered" => "badge-delivered",
+        "failed"    => "badge-failed",
+        "cancelled" => "badge-cancelled",
+        _ => "badge-pending"
+    };
+
+    private static string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpper()
+            : name[..1].ToUpper();
+    }
+}
