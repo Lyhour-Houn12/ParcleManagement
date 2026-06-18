@@ -1,0 +1,633 @@
+﻿@page "/tracking"
+@layout MainLayout
+@rendermode InteractiveServer
+
+<PageTitle>Tracking — SwiftTrack</PageTitle>
+
+<div class="st-page-header">
+    <div>
+        <h1 class="st-page-title">Tracking</h1>
+        <p class="st-page-sub">Real-time parcel tracking and delivery status</p>
+    </div>
+    <button class="st-btn st-btn-primary" @onclick="@(() => showEventForm = true)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add Event
+    </button>
+</div>
+
+<!-- Search Bar -->
+<div class="st-card track-search-card">
+    <div class="track-search-inner">
+        <div class="st-search track-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text"
+                   placeholder="Enter tracking ID (e.g. TRK-001234)..."
+                   @bind="trackInput"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKey" />
+        </div>
+        <button class="st-btn st-btn-primary" @onclick="SearchTracking">
+            Track Parcel
+        </button>
+    </div>
+</div>
+
+@if (selectedParcel != null)
+{
+    <!-- Parcel Detail Panel -->
+    <div class="track-detail-grid">
+
+        <!-- Left: Info + Timeline -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+
+            <!-- Parcel Info Card -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <h2 class="st-page-title" style="font-size:15px;">Parcel Details</h2>
+                    <span class="st-badge @GetStatusBadge(selectedParcel.Status)">@selectedParcel.Status</span>
+                </div>
+                <div class="st-card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Tracking ID</span>
+                            <span class="tracking-id">@selectedParcel.TrackingId</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Service Type</span>
+                            <span class="detail-value">@selectedParcel.ServiceType</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Sender</span>
+                            <span class="detail-value">@selectedParcel.Sender</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Recipient</span>
+                            <span class="detail-value">@selectedParcel.Recipient</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Origin</span>
+                            <span class="detail-value">@selectedParcel.Origin</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Destination</span>
+                            <span class="detail-value">@selectedParcel.Destination</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Weight</span>
+                            <span class="detail-value">@selectedParcel.Weight kg</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Est. Delivery</span>
+                            <span class="detail-value">@selectedParcel.EstDelivery</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assigned Driver Card -->
+            <div class="st-card">
+                <div class="st-card-header">
+                    <h2 class="st-page-title" style="font-size:15px;">Assigned Driver</h2>
+                </div>
+                <div class="st-card-body">
+                    <div class="driver-row">
+                        <div class="driver-avatar">@selectedParcel.DriverInitials</div>
+                        <div>
+                            <div class="driver-name">@selectedParcel.DriverName</div>
+                            <div class="driver-meta">@selectedParcel.DriverPhone · Vehicle @selectedParcel.VehiclePlate</div>
+                        </div>
+                        <span class="st-badge st-badge-green" style="margin-left:auto;">Active</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right: Tracking Timeline -->
+        <div class="st-card">
+            <div class="st-card-header">
+                <h2 class="st-page-title" style="font-size:15px;">Tracking History</h2>
+                <span style="font-size:12px; color:var(--text-secondary);">@selectedParcel.Events.Count events</span>
+            </div>
+            <div class="st-card-body">
+                <div class="timeline">
+                    @for (int i = 0; i < selectedParcel.Events.Count; i++)
+                    {
+                        var ev = selectedParcel.Events[i];
+                        bool isLast = i == selectedParcel.Events.Count - 1;
+                        bool isFirst = i == 0;
+                        <div class="timeline-item @(isFirst ? "timeline-item-active" : "")">
+                            <div class="timeline-line-wrap">
+                                <div class="timeline-dot @(isFirst ? "dot-active" : isLast ? "dot-muted" : "dot-done")">
+                                    @if (isFirst)
+                                    {
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12" /></svg>
+                                    }
+                                </div>
+                                @if (!isLast)
+                                {
+                                    <div class="timeline-connector"></div>
+                                }
+                            </div>
+                            <div class="timeline-body">
+                                <div class="timeline-event">@ev.Event</div>
+                                <div class="timeline-location">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                    @ev.Location
+                                </div>
+                                <div class="timeline-time">@ev.Timestamp</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+else if (searched)
+{
+    <div class="st-card" style="margin-top:16px;">
+        <div class="st-card-body" style="text-align:center; padding:48px 24px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" style="margin:0 auto 12px;display:block;"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <div style="font-size:15px; font-weight:600; color:var(--text-primary); margin-bottom:6px;">No parcel found</div>
+            <div style="font-size:13px; color:var(--text-secondary);">No results for <strong>@trackInput</strong>. Check the tracking ID and try again.</div>
+        </div>
+    </div>
+}
+
+<!-- Recent Tracking Activity Table -->
+<div class="st-card" style="margin-top:24px;">
+    <div class="st-card-header">
+        <div>
+            <h2 class="st-page-title" style="font-size:16px;">Recent Tracking Activity</h2>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div class="st-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input type="text" placeholder="Search events..." @bind="eventSearch" @bind:event="oninput" />
+            </div>
+            <select class="st-select" @bind="eventTypeFilter">
+                <option value="">All Events</option>
+                <option value="Picked Up">Picked Up</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Out for Delivery">Out for Delivery</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Failed">Failed Attempt</option>
+            </select>
+        </div>
+    </div>
+    <div class="st-card-body" style="padding:0;">
+        <table class="st-table">
+            <thead>
+                <tr>
+                    <th>Tracking ID</th>
+                    <th>Event</th>
+                    <th>Location</th>
+                    <th>Driver</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ev in FilteredEvents)
+                {
+                    <tr>
+                        <td>
+                            <span class="tracking-id" style="cursor:pointer;" @onclick="@(() => QuickTrack(ev.TrackingId))">
+                                @ev.TrackingId
+                            </span>
+                        </td>
+                        <td>@ev.Event</td>
+                        <td>@ev.Location</td>
+                        <td>@ev.Driver</td>
+                        <td>
+                            <span class="st-badge @GetEventBadge(ev.Event)">@ev.Event</span>
+                        </td>
+                        <td>@ev.Timestamp</td>
+                        <td>
+                            <button class="st-btn st-btn-ghost" style="padding:4px 8px; font-size:12px;"
+                                    @onclick="@(() => QuickTrack(ev.TrackingId))">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private string trackInput = "";
+    private string eventSearch = "";
+    private string eventTypeFilter = "";
+    private bool searched = false;
+    private bool showEventForm = false;
+
+    private TrackingParcel? selectedParcel;
+
+    private void HandleKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") SearchTracking();
+    }
+
+    private void QuickTrack(string id)
+    {
+        trackInput = id;
+        SearchTracking();
+    }
+
+    private void SearchTracking()
+    {
+        searched = true;
+        selectedParcel = allParcels.FirstOrDefault(p =>
+            p.TrackingId.Equals(trackInput.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Delivered" => "st-badge-green",
+        "In Transit" => "st-badge-blue",
+        "Pending" => "st-badge-amber",
+        "Failed" => "st-badge-red",
+        _ => "st-badge-gray"
+    };
+
+    private string GetEventBadge(string ev) => ev switch
+    {
+        "Delivered" => "st-badge-green",
+        "Out for Delivery" => "st-badge-blue",
+        "In Transit" => "st-badge-blue",
+        "Picked Up" => "st-badge-amber",
+        "Failed Attempt" => "st-badge-red",
+        _ => "st-badge-gray"
+    };
+
+    private IEnumerable<RecentEvent> FilteredEvents => recentEvents
+        .Where(e =>
+            (string.IsNullOrEmpty(eventSearch) ||
+             e.TrackingId.Contains(eventSearch, StringComparison.OrdinalIgnoreCase) ||
+             e.Event.Contains(eventSearch, StringComparison.OrdinalIgnoreCase) ||
+             e.Location.Contains(eventSearch, StringComparison.OrdinalIgnoreCase) ||
+             e.Driver.Contains(eventSearch, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(eventTypeFilter) ||
+             e.Event.Equals(eventTypeFilter, StringComparison.OrdinalIgnoreCase))
+        );
+
+    // ── Dummy Data ─────────────────────────────────────────────────────────────
+
+    record TrackingEvent(string Event, string Location, string Timestamp);
+
+    class TrackingParcel
+    {
+        public string TrackingId { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Sender { get; set; } = "";
+        public string Recipient { get; set; } = "";
+        public string Origin { get; set; } = "";
+        public string Destination { get; set; } = "";
+        public string ServiceType { get; set; } = "";
+        public double Weight { get; set; }
+        public string EstDelivery { get; set; } = "";
+        public string DriverName { get; set; } = "";
+        public string DriverInitials { get; set; } = "";
+        public string DriverPhone { get; set; } = "";
+        public string VehiclePlate { get; set; } = "";
+        public List<TrackingEvent> Events { get; set; } = new();
+    }
+
+    record RecentEvent(string TrackingId, string Event, string Location, string Driver, string Timestamp);
+
+    private List<TrackingParcel> allParcels = new()
+    {
+        new TrackingParcel
+        {
+            TrackingId = "TRK-001234",
+            Status = "Delivered",
+            Sender = "San Tin",
+            Recipient = "Dara Sok",
+            Origin = "Phnom Penh Hub",
+            Destination = "Phnom Penh",
+            ServiceType = "Express",
+            Weight = 1.2,
+            EstDelivery = "2026-06-15",
+            DriverName = "Kheang Vuth",
+            DriverInitials = "KV",
+            DriverPhone = "+855 12 345 678",
+            VehiclePlate = "PP-2341",
+            Events = new()
+            {
+                new("Delivered", "Phnom Penh, Street 271", "2026-06-15 14:32"),
+                new("Out for Delivery", "Phnom Penh Distribution Center", "2026-06-15 08:10"),
+                new("Arrived at Destination Hub", "Phnom Penh Hub", "2026-06-14 22:05"),
+                new("In Transit", "Kampong Speu Checkpoint", "2026-06-14 16:40"),
+                new("Picked Up", "Phnom Penh Hub", "2026-06-14 09:00"),
+            }
+        },
+        new TrackingParcel
+        {
+            TrackingId = "TRK-001235",
+            Status = "In Transit",
+            Sender = "Kosal Rin",
+            Recipient = "Mony Chan",
+            Origin = "Phnom Penh Hub",
+            Destination = "Siem Reap",
+            ServiceType = "Standard",
+            Weight = 3.5,
+            EstDelivery = "2026-06-18",
+            DriverName = "Panha Srun",
+            DriverInitials = "PS",
+            DriverPhone = "+855 17 654 321",
+            VehiclePlate = "SR-8812",
+            Events = new()
+            {
+                new("In Transit", "Kampong Thom Checkpoint", "2026-06-16 13:20"),
+                new("Departed Origin Hub", "Phnom Penh Hub", "2026-06-16 07:45"),
+                new("Picked Up", "Phnom Penh Hub", "2026-06-16 06:30"),
+            }
+        },
+        new TrackingParcel
+        {
+            TrackingId = "TRK-001236",
+            Status = "Pending",
+            Sender = "Pisey Lim",
+            Recipient = "Vanna Keo",
+            Origin = "Phnom Penh Hub",
+            Destination = "Battambang",
+            ServiceType = "Economy",
+            Weight = 0.8,
+            EstDelivery = "2026-06-19",
+            DriverName = "Unassigned",
+            DriverInitials = "–",
+            DriverPhone = "–",
+            VehiclePlate = "–",
+            Events = new()
+            {
+                new("Parcel Registered", "Phnom Penh Hub", "2026-06-16 10:00"),
+            }
+        },
+        new TrackingParcel
+        {
+            TrackingId = "TRK-001237",
+            Status = "Failed",
+            Sender = "Ratana Ok",
+            Recipient = "Sothy Prak",
+            Origin = "Phnom Penh Hub",
+            Destination = "Kampot",
+            ServiceType = "Express",
+            Weight = 2.1,
+            EstDelivery = "2026-06-14",
+            DriverName = "Dara Heng",
+            DriverInitials = "DH",
+            DriverPhone = "+855 96 111 222",
+            VehiclePlate = "KP-4490",
+            Events = new()
+            {
+                new("Failed Attempt", "Kampot, Street 4", "2026-06-14 15:10"),
+                new("Out for Delivery", "Kampot Hub", "2026-06-14 09:30"),
+                new("Arrived at Destination Hub", "Kampot Hub", "2026-06-13 21:00"),
+                new("In Transit", "Takeo Checkpoint", "2026-06-13 13:15"),
+                new("Picked Up", "Phnom Penh Hub", "2026-06-13 08:00"),
+            }
+        },
+    };
+
+    private List<RecentEvent> recentEvents = new()
+    {
+        new("TRK-001239", "In Transit", "Phnom Penh Ring Road", "Panha Srun", "2026-06-17 11:05"),
+        new("TRK-001235", "In Transit", "Kampong Thom Checkpoint", "Panha Srun", "2026-06-16 13:20"),
+        new("TRK-001236", "Picked Up", "Phnom Penh Hub", "Kheang Vuth", "2026-06-16 10:00"),
+        new("TRK-001234", "Delivered", "Phnom Penh, Street 271", "Kheang Vuth", "2026-06-15 14:32"),
+        new("TRK-001234", "Out for Delivery", "Phnom Penh Distribution Center", "Kheang Vuth", "2026-06-15 08:10"),
+        new("TRK-001237", "Failed Attempt", "Kampot, Street 4", "Dara Heng", "2026-06-14 15:10"),
+        new("TRK-001238", "Delivered", "Takeo Central Market", "Sokha Meas", "2026-06-13 16:45"),
+        new("TRK-001237", "Out for Delivery", "Kampot Hub", "Dara Heng", "2026-06-14 09:30"),
+    };
+}
+
+<style>
+    .st-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+
+    /* ── Search bar ── */
+    .track-search-card {
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+
+    .track-search-inner {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .track-search-box {
+        flex: 1;
+    }
+
+        .track-search-box input {
+            width: 100%;
+            font-size: 14px;
+        }
+
+    /* ── Detail grid ── */
+    .track-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 0;
+    }
+
+    /* ── Detail items ── */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .detail-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+
+    .detail-value {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    /* ── Driver row ── */
+    .driver-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .driver-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--blue-light);
+        color: var(--blue-primary);
+        font-weight: 700;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .driver-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .driver-meta {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: 14px;
+        padding-bottom: 20px;
+    }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+    .timeline-line-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: 20px;
+    }
+
+    .timeline-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .dot-active {
+        background: var(--blue-primary);
+        color: #fff;
+    }
+
+    .dot-done {
+        background: #e6f9f0;
+        border: 2px solid #1a8a4a;
+    }
+
+    .dot-muted {
+        background: var(--border-color);
+        border: 2px solid #ccc;
+    }
+
+    .timeline-connector {
+        width: 2px;
+        flex: 1;
+        min-height: 16px;
+        background: var(--border-color);
+        margin-top: 4px;
+    }
+
+    .timeline-body {
+        padding-bottom: 4px;
+    }
+
+    .timeline-event {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .timeline-location {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .timeline-time {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    /* ── Shared ── */
+    .tracking-id {
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--blue-primary);
+        font-weight: 600;
+    }
+
+    .st-select {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        background: #fff;
+        color: var(--text-primary);
+        outline: none;
+        cursor: pointer;
+    }
+
+        .st-select:focus {
+            border-color: var(--blue-primary);
+            box-shadow: 0 0 0 3px rgba(26,111,219,.12);
+        }
+
+    @@media (max-width: 900px) {
+        .track-detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .track-search-inner {
+            flex-direction: column;
+        }
+
+            .track-search-inner .st-btn {
+                width: 100%;
+            }
+    }
+</style>

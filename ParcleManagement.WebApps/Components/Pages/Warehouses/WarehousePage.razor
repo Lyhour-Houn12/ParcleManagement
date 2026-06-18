@@ -1,0 +1,643 @@
+﻿@page "/warehouses"
+@layout MainLayout
+@rendermode InteractiveServer
+
+<PageTitle>Warehouses — SwiftTrack</PageTitle>
+
+<div class="st-page-header">
+    <div>
+        <h1 class="st-page-title">Warehouses</h1>
+        <p class="st-page-sub">Manage hubs, storage locations, and capacity</p>
+    </div>
+    <button class="st-btn st-btn-primary" @onclick="@(() => showForm = true)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add Warehouse
+    </button>
+</div>
+
+<!-- Stats -->
+<div class="wh-stats">
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">12</div>
+            <div class="stat-label">Total Warehouses</div>
+        </div>
+    </div>
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">9</div>
+            <div class="stat-label">Operational</div>
+        </div>
+    </div>
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-amber">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">4,280</div>
+            <div class="stat-label">Parcels Stored</div>
+        </div>
+    </div>
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-red">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">73%</div>
+            <div class="stat-label">Avg. Capacity Used</div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Warehouse Modal -->
+@if (showForm)
+{
+    <div class="modal-backdrop" @onclick="@(() => showForm = false)">
+        <div class="modal-card" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2 class="st-page-title" style="font-size:16px;">Add Warehouse</h2>
+                <button class="st-btn st-btn-ghost" style="padding:4px 8px;" @onclick="@(() => showForm = false)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Warehouse Name</label>
+                        <input class="form-input" type="text" placeholder="e.g. Phnom Penh Central Hub" @bind="form.Name" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Code</label>
+                        <input class="form-input" type="text" placeholder="e.g. WH-PP-01" @bind="form.Code" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <input class="form-input" type="text" placeholder="Full address" @bind="form.Address" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">City / Province</label>
+                        <select class="form-input" @bind="form.City">
+                            <option value="Phnom Penh">Phnom Penh</option>
+                            <option value="Siem Reap">Siem Reap</option>
+                            <option value="Battambang">Battambang</option>
+                            <option value="Kampot">Kampot</option>
+                            <option value="Takeo">Takeo</option>
+                            <option value="Kandal">Kandal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select class="form-input" @bind="form.Type">
+                            <option value="Hub">Hub</option>
+                            <option value="Sorting Center">Sorting Center</option>
+                            <option value="Pickup Point">Pickup Point</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Max Capacity (parcels)</label>
+                        <input class="form-input" type="number" placeholder="e.g. 1000" @bind="form.MaxCapacity" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Manager</label>
+                        <input class="form-input" type="text" placeholder="e.g. Dara Sok" @bind="form.Manager" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="st-btn st-btn-ghost" @onclick="@(() => showForm = false)">Cancel</button>
+                <button class="st-btn st-btn-primary" @onclick="HandleSubmit">Add Warehouse</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Warehouse Cards -->
+<div class="wh-grid" style="margin-top:24px;">
+    @foreach (var w in FilteredWarehouses)
+    {
+        var pct = (int)((double)w.CurrentStock / w.MaxCapacity * 100);
+        var barColor = pct >= 90 ? "#dc2626" : pct >= 70 ? "#b45309" : "#1a8a4a";
+
+        <div class="st-card wh-card">
+            <div class="wh-card-top">
+                <div class="wh-icon-wrap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div class="wh-name">@w.Name</div>
+                    <div class="wh-code">@w.Code</div>
+                </div>
+                <span class="st-badge @GetStatusBadge(w.Status)">@w.Status</span>
+            </div>
+
+            <div class="wh-divider"></div>
+
+            <div class="wh-info-grid">
+                <div class="winfo-item">
+                    <span class="info-label">Type</span>
+                    <span class="info-value">@w.Type</span>
+                </div>
+                <div class="winfo-item">
+                    <span class="info-label">City</span>
+                    <span class="info-value">@w.City</span>
+                </div>
+                <div class="winfo-item">
+                    <span class="info-label">Manager</span>
+                    <span class="info-value">@w.Manager</span>
+                </div>
+                <div class="winfo-item">
+                    <span class="info-label">Parcels</span>
+                    <span class="info-value" style="color:var(--blue-primary); font-weight:600;">@w.CurrentStock / @w.MaxCapacity</span>
+                </div>
+            </div>
+
+            <!-- Capacity bar -->
+            <div style="margin-top:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span class="info-label">Capacity Used</span>
+                    <span style="font-size:12px; font-weight:600; color:@barColor;">@pct%</span>
+                </div>
+                <div class="capacity-bar-bg">
+                    <div class="capacity-bar-fill" style="width:@pct%; background:@barColor;"></div>
+                </div>
+            </div>
+
+            <div class="wh-card-footer">
+                <button class="st-btn st-btn-ghost" style="font-size:12px; padding:5px 10px; flex:1;">View</button>
+                <button class="st-btn st-btn-outline" style="font-size:12px; padding:5px 10px; flex:1;">Edit</button>
+                <button class="st-btn st-btn-ghost" style="font-size:12px; padding:5px 10px; flex:1; color:@(w.Status == "Operational" ? "#dc2626" : "#1a8a4a");"
+                        @onclick="@(() => ToggleStatus(w))">
+                    @(w.Status == "Operational" ? "Close" : "Open")
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Table -->
+<div class="st-card" style="margin-top:24px;">
+    <div class="st-card-header">
+        <h2 class="st-page-title" style="font-size:16px;">All Warehouses</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div class="st-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input type="text" placeholder="Search warehouses..." @bind="searchQuery" @bind:event="oninput" />
+            </div>
+            <select class="st-select" @bind="typeFilter">
+                <option value="">All Types</option>
+                <option value="Hub">Hub</option>
+                <option value="Sorting Center">Sorting Center</option>
+                <option value="Pickup Point">Pickup Point</option>
+            </select>
+            <select class="st-select" @bind="statusFilter">
+                <option value="">All Status</option>
+                <option value="Operational">Operational</option>
+                <option value="Closed">Closed</option>
+            </select>
+        </div>
+    </div>
+    <div class="st-card-body" style="padding:0;">
+        <table class="st-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Code</th>
+                    <th>Type</th>
+                    <th>City</th>
+                    <th>Manager</th>
+                    <th>Stock</th>
+                    <th>Max Cap.</th>
+                    <th>Used</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var w in FilteredWarehouses)
+                {
+                    var pct = (int)((double)w.CurrentStock / w.MaxCapacity * 100);
+                    var barColor = pct >= 90 ? "#dc2626" : pct >= 70 ? "#b45309" : "#1a8a4a";
+                    <tr>
+                        <td style="font-weight:500;">@w.Name</td>
+                        <td><span class="plate-tag">@w.Code</span></td>
+                        <td>
+                            <span class="st-badge @GetTypeBadge(w.Type)">@w.Type</span>
+                        </td>
+                        <td>@w.City</td>
+                        <td>@w.Manager</td>
+                        <td style="font-weight:600; color:var(--blue-primary);">@w.CurrentStock</td>
+                        <td>@w.MaxCapacity</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="capacity-bar-bg" style="width:80px;">
+                                    <div class="capacity-bar-fill" style="width:@pct%; background:@barColor;"></div>
+                                </div>
+                                <span style="font-size:12px; font-weight:600; color:@barColor;">@pct%</span>
+                            </div>
+                        </td>
+                        <td><span class="st-badge @GetStatusBadge(w.Status)">@w.Status</span></td>
+                        <td>
+                            <div style="display:flex; gap:6px;">
+                                <button class="st-btn st-btn-ghost" style="padding:4px 8px; font-size:12px;">View</button>
+                                <button class="st-btn st-btn-outline" style="padding:4px 8px; font-size:12px;">Edit</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private string searchQuery = "";
+    private string typeFilter = "";
+    private string statusFilter = "";
+    private bool showForm = false;
+    private WarehouseForm form = new();
+
+    private string GetStatusBadge(string s) =>
+        s == "Operational" ? "st-badge-green" : "st-badge-gray";
+
+    private string GetTypeBadge(string t) => t switch
+    {
+        "Hub" => "st-badge-blue",
+        "Sorting Center" => "st-badge-amber",
+        _ => "st-badge-gray"
+    };
+
+    private void ToggleStatus(WarehouseItem w)
+    {
+        var idx = warehouses.IndexOf(w);
+        warehouses[idx] = w with { Status = w.Status == "Operational" ? "Closed" : "Operational" };
+    }
+
+    private void HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(form.Name)) return;
+        warehouses.Insert(0, new WarehouseItem(
+            form.Name,
+            string.IsNullOrWhiteSpace(form.Code) ? $"WH-{form.City[..2].ToUpper()}-{Random.Shared.Next(10, 99)}" : form.Code,
+            form.Type,
+            form.City,
+            string.IsNullOrWhiteSpace(form.Address) ? "—" : form.Address,
+            string.IsNullOrWhiteSpace(form.Manager) ? "—" : form.Manager,
+            0,
+            form.MaxCapacity == 0 ? 500 : form.MaxCapacity,
+            "Operational"
+        ));
+        form = new();
+        showForm = false;
+    }
+
+    private IEnumerable<WarehouseItem> FilteredWarehouses => warehouses.Where(w =>
+        (string.IsNullOrEmpty(searchQuery) ||
+         w.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         w.Code.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         w.City.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         w.Manager.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrEmpty(typeFilter) || w.Type == typeFilter) &&
+        (string.IsNullOrEmpty(statusFilter) || w.Status == statusFilter)
+    );
+
+    record WarehouseItem(string Name, string Code, string Type, string City,
+                         string Address, string Manager,
+                         int CurrentStock, int MaxCapacity, string Status);
+
+    class WarehouseForm
+    {
+        public string Name { get; set; } = "";
+        public string Code { get; set; } = "";
+        public string Type { get; set; } = "Hub";
+        public string City { get; set; } = "Phnom Penh";
+        public string Address { get; set; } = "";
+        public string Manager { get; set; } = "";
+        public int MaxCapacity { get; set; }
+    }
+
+    private List<WarehouseItem> warehouses = new()
+    {
+        new("Phnom Penh Central Hub",    "WH-PP-01", "Hub",            "Phnom Penh", "Street 271, Toul Kork",       "Dara Sok",    842,  1000, "Operational"),
+        new("Phnom Penh South Hub",      "WH-PP-02", "Hub",            "Phnom Penh", "Street 60, Meanchey",         "Mony Chan",   610,  800,  "Operational"),
+        new("Phnom Penh Sorting Center", "WH-PP-03", "Sorting Center", "Phnom Penh", "NR4, Por Sen Chey",           "Kosal Rin",   390,  600,  "Operational"),
+        new("Siem Reap Hub",             "WH-SR-01", "Hub",            "Siem Reap",  "Airport Road, Siem Reap",     "Pisey Lim",   520,  700,  "Operational"),
+        new("Battambang Hub",            "WH-BB-01", "Hub",            "Battambang", "NR5, Battambang City",        "Ratana Ok",   280,  500,  "Operational"),
+        new("Kampot Pickup Point",       "WH-KP-01", "Pickup Point",   "Kampot",     "Old Market, Kampot",          "Sreyla Oun",  95,   200,  "Operational"),
+        new("Takeo Hub",                 "WH-TK-01", "Hub",            "Takeo",      "Takeo Town Center",           "Chanthy Im",  310,  400,  "Operational"),
+        new("Kandal Sorting Center",     "WH-KD-01", "Sorting Center", "Kandal",     "Saang District, Kandal",      "Vanna Keo",   440,  500,  "Operational"),
+        new("Siem Reap Pickup Point",    "WH-SR-02", "Pickup Point",   "Siem Reap",  "Pub Street Area, Siem Reap",  "Panha Srun",  55,   150,  "Operational"),
+        new("Battambang Pickup Point",   "WH-BB-02", "Pickup Point",   "Battambang", "Central Market, Battambang",  "Borin Keo",   38,   150,  "Closed"),
+    };
+}
+
+<style>
+    .st-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+
+    /* Stats */
+    .wh-stats {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: 16px;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-icon-blue {
+        background: var(--blue-light);
+        color: var(--blue-primary);
+    }
+
+    .stat-icon-green {
+        background: #e6f9f0;
+        color: #1a8a4a;
+    }
+
+    .stat-icon-amber {
+        background: #fff8e6;
+        color: #b45309;
+    }
+
+    .stat-icon-red {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 3px;
+    }
+
+    /* Warehouse Cards */
+    .wh-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 16px;
+    }
+
+    .wh-card {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wh-card-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .wh-icon-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-md);
+        background: var(--blue-light);
+        color: var(--blue-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .wh-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wh-code {
+        font-family: monospace;
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    .wh-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin-bottom: 14px;
+    }
+
+    .wh-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .winfo-item {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .info-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-secondary);
+    }
+
+    .info-value {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    /* Capacity bar */
+    .capacity-bar-bg {
+        height: 6px;
+        background: var(--border-color);
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .capacity-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width .3s ease;
+    }
+
+    .wh-card-footer {
+        display: flex;
+        gap: 6px;
+        margin-top: 16px;
+    }
+
+    /* Table extras */
+    .plate-tag {
+        font-family: monospace;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--bg-page);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 2px 7px;
+        color: var(--text-primary);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.35);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-card {
+        background: #fff;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        width: 520px;
+        max-width: calc(100vw - 32px);
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 48px);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--text-secondary);
+    }
+
+    .form-input {
+        padding: 9px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--text-primary);
+        background: #fff;
+        outline: none;
+        width: 100%;
+        font-family: inherit;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+        .form-input:focus {
+            border-color: var(--blue-primary);
+            box-shadow: 0 0 0 3px rgba(26,111,219,.12);
+        }
+
+    .st-select {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        background: #fff;
+        color: var(--text-primary);
+        outline: none;
+        cursor: pointer;
+    }
+
+        .st-select:focus {
+            border-color: var(--blue-primary);
+            box-shadow: 0 0 0 3px rgba(26,111,219,.12);
+        }
+
+    @@media (max-width: 900px) {
+        .wh-stats {
+            grid-template-columns: repeat(2,1fr);
+        }
+
+        .wh-grid {
+            grid-template-columns: repeat(2,1fr);
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .wh-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-row {
+            flex-direction: column;
+        }
+    }
+</style>

@@ -1,0 +1,224 @@
+﻿@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<header class="st-header">
+    
+    <div class="header-left">
+        <div class="breadcrumb">
+            <span class="breadcrumb-root">SwiftTrack</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            <span class="breadcrumb-current">@CurrentPage</span>
+        </div>
+    </div>
+
+    <div class="header-right">
+        <button class="header-icon-btn" title="Search">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+        </button>
+
+        <button class="header-icon-btn notif-btn" title="Notifications">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span class="notif-dot"></span>
+        </button>
+
+        <button class="header-icon-btn" @onclick="ToggleTheme" title="Toggle Theme">
+            @if (isDark)
+            {
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+            }
+            else
+            {
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            }
+        </button>
+
+        <div class="header-divider"></div>
+
+        <div class="header-user">
+            <div class="header-avatar">A</div>
+            <div class="header-user-info">
+                <span class="header-user-name">Admin</span>
+                <span class="header-user-role">Manager</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+@code {
+    [Parameter] public EventCallback OnToggleSidebar { get; set; }
+    
+
+    private bool isDark = false;
+    private string CurrentPage => GetPageName(Nav.Uri);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var theme = await JS.InvokeAsync<string>("localStorage.getItem", "theme");
+            isDark = theme == "dark";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDark = !isDark;
+        await JS.InvokeVoidAsync("setTheme", isDark ? "dark" : "light");
+    }
+
+    private string GetPageName(string uri)
+    {
+        var path = new Uri(uri).AbsolutePath.TrimStart('/');
+        if (string.IsNullOrEmpty(path)) return "Dashboard";
+        return System.Globalization.CultureInfo.CurrentCulture
+            .TextInfo.ToTitleCase(path.Split('/')[0]);
+    }
+}
+
+<style>
+    .st-header {
+        height: var(--header-height);
+        background: var(--white);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        position: fixed; /* 👈 change sticky to fixed */
+        top: 0;
+        left: var(--sidebar-width);
+        right: 0;
+        z-index: 50;
+        box-shadow: var(--shadow-sm);
+        transition: left 0.25s ease;
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13.5px;
+    }
+
+    .breadcrumb-root {
+        color: var(--text-secondary);
+    }
+
+    .breadcrumb svg {
+        color: var(--text-secondary);
+        opacity: .5;
+    }
+
+    .breadcrumb-current {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .header-icon-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: background .12s, color .12s;
+    }
+
+        .header-icon-btn:hover {
+            background: var(--bg-page);
+            color: var(--text-primary);
+        }
+
+    .notif-dot {
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        width: 7px;
+        height: 7px;
+        background: #ef4444;
+        border-radius: 50%;
+        border: 1.5px solid #fff;
+    }
+
+    .header-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--border-color);
+        margin: 0 8px;
+    }
+
+    .header-user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        transition: background .12s;
+    }
+
+        .header-user:hover {
+            background: var(--bg-page);
+        }
+
+    .header-avatar {
+        width: 32px;
+        height: 32px;
+        background: var(--blue-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .header-user-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header-user-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.3;
+    }
+
+    .header-user-role {
+        font-size: 11px;
+        color: var(--text-secondary);
+        line-height: 1.3;
+    }
+</style>

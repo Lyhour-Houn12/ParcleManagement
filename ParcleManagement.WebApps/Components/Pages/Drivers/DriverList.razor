@@ -1,0 +1,640 @@
+﻿@page "/drivers"
+@layout MainLayout
+@rendermode InteractiveServer
+
+<PageTitle>Drivers — SwiftTrack</PageTitle>
+
+<div class="st-page-header">
+    <div>
+        <h1 class="st-page-title">Drivers</h1>
+        <p class="st-page-sub">Manage drivers, vehicles, and delivery capacity</p>
+    </div>
+    <button class="st-btn st-btn-primary" @onclick="@(() => showForm = true)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        New Driver
+    </button>
+</div>
+
+<!-- Stats -->
+<div class="driver-stats">
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">24</div>
+            <div class="stat-label">Total Drivers</div>
+        </div>
+    </div>
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">18</div>
+            <div class="stat-label">Available</div>
+        </div>
+    </div>
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-amber">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2" /><path d="M16 8h4l3 5v3h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">14</div>
+            <div class="stat-label">On Delivery</div>
+        </div>
+    </div>
+    <div class="st-card stat-card">
+        <div class="stat-icon stat-icon-red">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></svg>
+        </div>
+        <div>
+            <div class="stat-value">6</div>
+            <div class="stat-label">Inactive</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+@if (showForm)
+{
+    <div class="modal-backdrop" @onclick="@(() => showForm = false)">
+        <div class="modal-card" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2 class="st-page-title" style="font-size:16px;">New Driver</h2>
+                <button class="st-btn st-btn-ghost" style="padding:4px 8px;" @onclick="@(() => showForm = false)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input class="form-input" type="text" placeholder="e.g. Kheang Vuth" @bind="form.FullName" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input class="form-input" type="text" placeholder="+855 12 000 000" @bind="form.Phone" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" type="email" placeholder="e.g. kheang@swifttrack.com" @bind="form.Email" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">License Number</label>
+                        <input class="form-input" type="text" placeholder="e.g. KH-20240012" @bind="form.License" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Plate</label>
+                        <input class="form-input" type="text" placeholder="e.g. PP-2341" @bind="form.VehiclePlate" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Type</label>
+                        <select class="form-input" @bind="form.VehicleType">
+                            <option value="Motorbike">Motorbike</option>
+                            <option value="Van">Van</option>
+                            <option value="Truck">Truck</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Zone</label>
+                        <select class="form-input" @bind="form.Zone">
+                            <option value="Phnom Penh">Phnom Penh</option>
+                            <option value="Siem Reap">Siem Reap</option>
+                            <option value="Battambang">Battambang</option>
+                            <option value="Kampot">Kampot</option>
+                            <option value="Takeo">Takeo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="st-btn st-btn-ghost" @onclick="@(() => showForm = false)">Cancel</button>
+                <button class="st-btn st-btn-primary" @onclick="HandleSubmit">Add Driver</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Driver Cards Grid -->
+<div class="driver-grid" style="margin-top:24px;">
+    @foreach (var d in FilteredDrivers)
+    {
+        <div class="st-card driver-card">
+            <div class="driver-card-top">
+                <div class="driver-avatar-lg" style="background:@GetAvatarBg(d.Status); color:@GetAvatarFg(d.Status);">
+                    @GetInitials(d.FullName)
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div class="driver-name">@d.FullName</div>
+                    <div class="driver-meta">@d.Phone</div>
+                </div>
+                <span class="st-badge @GetStatusBadge(d.Status)">@d.Status</span>
+            </div>
+            <div class="driver-divider"></div>
+            <div class="driver-info-grid">
+                <div class="driver-info-item">
+                    <span class="info-label">Zone</span>
+                    <span class="info-value">@d.Zone</span>
+                </div>
+                <div class="driver-info-item">
+                    <span class="info-label">Vehicle</span>
+                    <span class="info-value">@d.VehicleType</span>
+                </div>
+                <div class="driver-info-item">
+                    <span class="info-label">Plate</span>
+                    <span class="info-value plate-tag">@d.VehiclePlate</span>
+                </div>
+                <div class="driver-info-item">
+                    <span class="info-label">Deliveries</span>
+                    <span class="info-value" style="color:var(--blue-primary); font-weight:600;">@d.TotalDeliveries</span>
+                </div>
+            </div>
+            <div class="driver-card-footer">
+                <button class="st-btn st-btn-ghost" style="font-size:12px; padding:5px 10px; flex:1;">View</button>
+                <button class="st-btn st-btn-outline" style="font-size:12px; padding:5px 10px; flex:1;">Edit</button>
+                <button class="st-btn @(d.Status == "Active" ? "st-btn-ghost" : "st-btn-ghost")"
+                        style="font-size:12px; padding:5px 10px; flex:1; color:@(d.Status == "Active" ? "#dc2626" : "#1a8a4a");"
+                        @onclick="@(() => ToggleStatus(d))">
+                    @(d.Status == "Active" || d.Status == "On Delivery" ? "Disable" : "Enable")
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Table below cards -->
+<div class="st-card" style="margin-top:24px;">
+    <div class="st-card-header">
+        <h2 class="st-page-title" style="font-size:16px;">All Drivers</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div class="st-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input type="text" placeholder="Search drivers..." @bind="searchQuery" @bind:event="oninput" />
+            </div>
+            <select class="st-select" @bind="statusFilter">
+                <option value="">All Status</option>
+                <option value="Active">Available</option>
+                <option value="On Delivery">On Delivery</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+            <select class="st-select" @bind="zoneFilter">
+                <option value="">All Zones</option>
+                <option value="Phnom Penh">Phnom Penh</option>
+                <option value="Siem Reap">Siem Reap</option>
+                <option value="Battambang">Battambang</option>
+                <option value="Kampot">Kampot</option>
+                <option value="Takeo">Takeo</option>
+            </select>
+        </div>
+    </div>
+    <div class="st-card-body" style="padding:0;">
+        <table class="st-table">
+            <thead>
+                <tr>
+                    <th>Driver</th>
+                    <th>Phone</th>
+                    <th>License</th>
+                    <th>Vehicle</th>
+                    <th>Plate</th>
+                    <th>Zone</th>
+                    <th>Status</th>
+                    <th>Deliveries</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in FilteredDrivers)
+                {
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar" style="background:@GetAvatarBg(d.Status); color:@GetAvatarFg(d.Status);">
+                                    @GetInitials(d.FullName)
+                                </div>
+                                <span style="font-weight:500;">@d.FullName</span>
+                            </div>
+                        </td>
+                        <td>@d.Phone</td>
+                        <td style="font-family:monospace; font-size:12px; color:var(--text-secondary);">@d.License</td>
+                        <td>@d.VehicleType</td>
+                        <td><span class="plate-tag">@d.VehiclePlate</span></td>
+                        <td>@d.Zone</td>
+                        <td><span class="st-badge @GetStatusBadge(d.Status)">@d.Status</span></td>
+                        <td style="font-weight:600; color:var(--blue-primary);">@d.TotalDeliveries</td>
+                        <td>
+                            <div style="display:flex; gap:6px;">
+                                <button class="st-btn st-btn-ghost" style="padding:4px 8px; font-size:12px;">View</button>
+                                <button class="st-btn st-btn-outline" style="padding:4px 8px; font-size:12px;">Edit</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private string searchQuery = "";
+    private string statusFilter = "";
+    private string zoneFilter = "";
+    private bool showForm = false;
+    private DriverForm form = new();
+
+    private string GetInitials(string name)
+    {
+        var parts = name.Split(' ');
+        return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}" : name[..1];
+    }
+
+    private string GetAvatarBg(string status) => status switch
+    {
+        "On Delivery" => "#fff8e6",
+        "Inactive" => "#f3f4f6",
+        _ => "var(--blue-light)"
+    };
+
+    private string GetAvatarFg(string status) => status switch
+    {
+        "On Delivery" => "#b45309",
+        "Inactive" => "#6b7280",
+        _ => "var(--blue-primary)"
+    };
+
+    private string GetStatusBadge(string s) => s switch
+    {
+        "Active" => "st-badge-green",
+        "On Delivery" => "st-badge-amber",
+        _ => "st-badge-gray"
+    };
+
+    private void ToggleStatus(DriverItem d)
+    {
+        var idx = drivers.IndexOf(d);
+        drivers[idx] = d with { Status = d.Status == "Inactive" ? "Active" : "Inactive" };
+    }
+
+    private void HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(form.FullName)) return;
+        drivers.Insert(0, new DriverItem(
+            form.FullName,
+            string.IsNullOrWhiteSpace(form.Phone) ? "—" : form.Phone,
+            string.IsNullOrWhiteSpace(form.Email) ? "—" : form.Email,
+            string.IsNullOrWhiteSpace(form.License) ? "—" : form.License,
+            string.IsNullOrWhiteSpace(form.VehiclePlate) ? "—" : form.VehiclePlate,
+            form.VehicleType,
+            form.Zone,
+            "Active",
+            0
+        ));
+        form = new();
+        showForm = false;
+    }
+
+    private IEnumerable<DriverItem> FilteredDrivers => drivers.Where(d =>
+        (string.IsNullOrEmpty(searchQuery) ||
+         d.FullName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         d.Phone.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         d.VehiclePlate.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrEmpty(statusFilter) || d.Status == statusFilter) &&
+        (string.IsNullOrEmpty(zoneFilter) || d.Zone == zoneFilter)
+    );
+
+    record DriverItem(string FullName, string Phone, string Email, string License,
+                      string VehiclePlate, string VehicleType, string Zone,
+                      string Status, int TotalDeliveries);
+
+    class DriverForm
+    {
+        public string FullName { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string License { get; set; } = "";
+        public string VehiclePlate { get; set; } = "";
+        public string VehicleType { get; set; } = "Motorbike";
+        public string Zone { get; set; } = "Phnom Penh";
+    }
+
+    private List<DriverItem> drivers = new()
+    {
+        new("Kheang Vuth",  "+855 12 345 678", "kheang@swifttrack.com",  "KH-20240001", "PP-2341",  "Motorbike", "Phnom Penh",  "Active",      142),
+        new("Panha Srun",   "+855 17 654 321", "panha@swifttrack.com",   "KH-20240002", "SR-8812",  "Van",       "Siem Reap",   "On Delivery",  98),
+        new("Dara Heng",    "+855 96 111 222", "dara@swifttrack.com",    "KH-20240003", "KP-4490",  "Motorbike", "Kampot",      "Active",       75),
+        new("Sokha Meas",   "+855 12 777 888", "sokha@swifttrack.com",   "KH-20240004", "TK-3301",  "Motorbike", "Takeo",       "Active",      110),
+        new("Chanra Lim",   "+855 17 999 000", "chanra@swifttrack.com",  "KH-20240005", "SR-1122",  "Van",       "Siem Reap",   "On Delivery",  63),
+        new("Borin Keo",    "+855 96 444 555", "borin@swifttrack.com",   "KH-20240006", "BB-5500",  "Truck",     "Battambang",  "Active",       89),
+        new("Vibol Ros",    "+855 11 333 444", "vibol@swifttrack.com",   "KH-20240007", "PP-9900",  "Van",       "Phnom Penh",  "On Delivery",  54),
+        new("Channary Ok",  "+855 78 222 333", "channary@swifttrack.com","KH-20240008", "PP-6677",  "Motorbike", "Phnom Penh",  "Inactive",     38),
+        new("Sophea Noun",  "+855 12 100 200", "sophea@swifttrack.com",  "KH-20240009", "KP-8833",  "Motorbike", "Kampot",      "Active",       47),
+        new("Reaksa Pov",   "+855 17 500 600", "reaksa@swifttrack.com",  "KH-20240010", "BB-2244",  "Truck",     "Battambang",  "Inactive",     21),
+    };
+}
+
+<style>
+    .st-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+
+    /* Stats */
+    .driver-stats {
+        display: grid;
+        grid-template-columns: repeat(4,1fr);
+        gap: 16px;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-icon-blue {
+        background: var(--blue-light);
+        color: var(--blue-primary);
+    }
+
+    .stat-icon-green {
+        background: #e6f9f0;
+        color: #1a8a4a;
+    }
+
+    .stat-icon-amber {
+        background: #fff8e6;
+        color: #b45309;
+    }
+
+    .stat-icon-red {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 3px;
+    }
+
+    /* Driver Cards */
+    .driver-grid {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 16px;
+    }
+
+    .driver-card {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .driver-card-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .driver-avatar-lg {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        font-size: 15px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .driver-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .driver-meta {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    .driver-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin-bottom: 14px;
+    }
+
+    .driver-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .driver-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .info-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-secondary);
+    }
+
+    .info-value {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .driver-card-footer {
+        display: flex;
+        gap: 6px;
+    }
+
+    .plate-tag {
+        font-family: monospace;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--bg-page);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 2px 7px;
+        color: var(--text-primary);
+    }
+
+    /* Table */
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.35);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-card {
+        background: #fff;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        width: 520px;
+        max-width: calc(100vw - 32px);
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 48px);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--text-secondary);
+    }
+
+    .form-input {
+        padding: 9px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--text-primary);
+        background: #fff;
+        outline: none;
+        width: 100%;
+        font-family: inherit;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+        .form-input:focus {
+            border-color: var(--blue-primary);
+            box-shadow: 0 0 0 3px rgba(26,111,219,.12);
+        }
+
+    .st-select {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        background: #fff;
+        color: var(--text-primary);
+        outline: none;
+        cursor: pointer;
+    }
+
+        .st-select:focus {
+            border-color: var(--blue-primary);
+            box-shadow: 0 0 0 3px rgba(26,111,219,.12);
+        }
+
+    @@media (max-width: 900px) {
+        .driver-grid {
+            grid-template-columns: repeat(2,1fr);
+        }
+
+        .driver-stats {
+            grid-template-columns: repeat(2,1fr);
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .driver-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-row {
+            flex-direction: column;
+        }
+    }
+</style>

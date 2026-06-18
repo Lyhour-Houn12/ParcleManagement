@@ -1,0 +1,317 @@
+﻿@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+<!-- Overlay -->
+@if (IsVisible)
+{
+    <div class="panel-overlay"></div>
+    <div class="side-panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">New Parcel</h2>
+                <p class="panel-sub">Fill in the details to create a new parcel</p>
+            </div>
+            <button class="st-btn st-btn-ghost panel-close" @onclick="HandleClose">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="panel-body">
+            <!-- Sender Info -->
+            <div class="form-section">
+                <div class="form-section-title">Sender Information</div>
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input class="form-input" type="text" placeholder="Enter sender’s full name" @bind="form.SenderName" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input class="form-input" type="tel" placeholder="Enter sender’s phone number" @bind="form.SenderPhone" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <input class="form-input" type="text" placeholder="Enter sender’s address" @bind="form.SenderAddress" />
+                </div>
+            </div>
+
+            <!-- Recipient Info -->
+            <div class="form-section">
+                <div class="form-section-title">Recipient Information</div>
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input class="form-input" type="text" placeholder="Enter recipient’s full name" @bind="form.RecipientName" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input class="form-input" type="tel" placeholder="Enter recipient’s phone number" @bind="form.RecipientPhone" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Destination</label>
+                    <input class="form-input" type="text" placeholder="Enter delivery destination" @bind="form.Destination" />
+                </div>
+            </div>
+
+            <!-- Parcel Details -->
+            <div class="form-section">
+                <div class="form-section-title">Parcel Details</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Weight (kg)</label>
+                        <input class="form-input" type="number" placeholder="Enter parcel weight in kilograms" @bind="form.Weight" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Service Type</label>
+                        <select class="form-input" @bind="form.ServiceType">
+                            <option value="">Select type</option>
+                            <option value="standard">Standard</option>
+                            <option value="express">Express</option>
+                            <option value="overnight">Overnight</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Width (cm)</label>
+                        <input class="form-input" type="number" placeholder="Enter parcel width in centimeters" @bind="form.Width" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Height (cm)</label>
+                        <input class="form-input" type="number" placeholder="Enter parcel height in centimeters" @bind="form.Height" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (optional)</label>
+                    <textarea class="form-input form-textarea" placeholder="Add delivery instructions or additional details" @bind="form.Notes"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-footer">
+            <button class="st-btn st-btn-ghost" @onclick="HandleClose">Cancel</button>
+            <button class="st-btn st-btn-primary" @onclick="HandleSubmit" disabled="@isSubmitting">
+                @if (isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <span>Creating...</span>
+                }
+                else
+                {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Create Parcel</span>
+                }
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<ParcelFormData> OnSubmit { get; set; }
+
+    private bool isSubmitting = false;
+    private ParcelFormData form = new();
+    private bool _previousIsVisible;
+
+    private async Task HandleClose()
+    {
+        form = new();
+        await OnClose.InvokeAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_previousIsVisible != IsVisible)
+        {
+            _previousIsVisible = IsVisible;
+            if (IsVisible)
+                await JS.InvokeVoidAsync("document.body.style.setProperty", "overflow", "hidden");
+            else
+                await JS.InvokeVoidAsync("document.body.style.setProperty", "overflow", "auto");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        await Task.Delay(800);
+        await OnSubmit.InvokeAsync(form);
+        isSubmitting = false;
+        form = new();
+    }
+
+    public class ParcelFormData
+    {
+        public string SenderName { get; set; } = "";
+        public string SenderPhone { get; set; } = "";
+        public string SenderAddress { get; set; } = "";
+        public string RecipientName { get; set; } = "";
+        public string RecipientPhone { get; set; } = "";
+        public string Destination { get; set; } = "";
+        public double Weight { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public string ServiceType { get; set; } = "";
+        public string Notes { get; set; } = "";
+    }
+}
+
+<style>
+    .panel-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        backdrop-filter: blur(3px);
+        overflow: hidden;
+    }
+
+    .side-panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 560px;
+        max-height: 85vh;
+        background: #fff;
+        z-index: 101;
+        display: flex;
+        flex-direction: column;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        animation: popIn 0.2s ease;
+    }
+
+    @@keyframes popIn {
+        from {
+            transform: translate(-50%, -48%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translate(-50%, -50%);
+            opacity: 1;
+        }
+    }
+
+    .panel-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+
+    .panel-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .panel-sub {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 3px;
+    }
+
+    .panel-close {
+        padding: 6px;
+        margin-top: -4px;
+    }
+
+    .panel-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .panel-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .form-section {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .form-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-secondary);
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-input {
+        height: 38px;
+        padding: 0 12px;
+        border: 1.5px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--text-primary);
+        background: #f9fafb;
+        outline: none;
+        width: 100%;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+        .form-input:focus {
+            border-color: var(--blue-primary);
+            box-shadow: 0 0 0 3px rgba(26,111,219,.12);
+            background: #fff;
+        }
+
+    .form-textarea {
+        height: 80px;
+        padding: 10px 12px;
+        resize: none;
+    }
+
+    @@media (max-width: 600px) {
+        .side-panel {
+            width: 95vw;
+            max-height: 90vh;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
