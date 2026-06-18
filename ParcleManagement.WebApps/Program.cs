@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 using Blazilla;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -36,21 +37,46 @@ builder.Services.AddScoped<CustomAuthStateProvider>();
 var app = builder.Build();
 
 // ── Pipeline ────────────────────────────────────────────────────────────────
+=======
+using Microsoft.EntityFrameworkCore;
+using ParcleManagement.Data.db_migration;
+using ParcleManagement.WebApps.Components;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add parcleDbContext to the container
+builder.Services.AddDbContext<ParcleDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add services to the container.
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+>>>>>>> 5a6549e8f79d4fc59d7a6e713444ce58ecbbc4d7
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
 }
+<<<<<<< HEAD
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 
 app.UseAuthentication();  
 app.UseAuthorization();
 app.UseAntiforgery();   
+=======
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseAntiforgery();
+>>>>>>> 5a6549e8f79d4fc59d7a6e713444ce58ecbbc4d7
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+<<<<<<< HEAD
 app.MapPost("/api/auth/register", async (RegisterRequest req, AppDbContext db) =>
 {
     if (await db.Users.AnyAsync(u => u.email == req.Email))
@@ -107,3 +133,6 @@ record RegisterRequest(
     string Address,
     GStatus Gender
 );
+=======
+app.Run();
+>>>>>>> 5a6549e8f79d4fc59d7a6e713444ce58ecbbc4d7

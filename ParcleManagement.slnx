@@ -1,5 +1,11 @@
 <Solution>
+<<<<<<< HEAD
   <Project Path="D:/Parcel Management/ParcleManagement/ParcelManagement.ConsoleApp/ParcelManagement.ConsoleApp.csproj" Id="76742f98-faae-48b9-8d90-52a83d807481" />
   <Project Path="D:/Parcel Management/ParcleManagement/ParcleManagement.Data/ParcleManagement.Data.csproj" Id="3335a19b-c374-42bb-8032-d57cbbdb7bf9" />
   <Project Path="D:/Parcel Management/ParcleManagement/ParcleManagement.WebApps/ParcleManagement.WebApps.csproj" Id="d4c036c8-0e61-4223-be42-d2d66bddf02f" />
+=======
+  <Project Path="ParcleManagement.ConsoleApp/ParcleManagement.ConsoleApp.csproj" />
+  <Project Path="ParcleManagement.Data/ParcleManagement.Data.csproj" />
+  <Project Path="ParcleManagement.WebApps/ParcleManagement.WebApps.csproj" />
+>>>>>>> 5a6549e8f79d4fc59d7a6e713444ce58ecbbc4d7
 </Solution>

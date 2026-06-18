@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
@@ -8,3 +9,11 @@
         </LayoutView>
     </NotFound>
 </Router>
+=======
+﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+>>>>>>> 5a6549e8f79d4fc59d7a6e713444ce58ecbbc4d7
